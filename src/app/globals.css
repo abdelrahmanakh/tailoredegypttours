@@ -1,0 +1,344 @@
+        .opacity-100 {
+            transform: scale(1.5);
+        }
+          
+  /* Custom Background Image handling */
+        .hero-section {
+            background-image: linear-gradient(to bottom, rgba(0, 57, 64, 0.4), rgba(0, 57, 64, 0.6)), url('https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center bottom;
+            background-repeat: no-repeat;
+            position: relative;
+            height: 85vh; /* Covers most of the screen */
+            min-height: 600px;
+        }
+
+        /* The Wave Shape Divider for Hero */
+        .custom-shape-divider-bottom {
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            overflow: hidden;
+            line-height: 0;
+        }
+
+        .custom-shape-divider-bottom svg {
+            position: relative;
+            display: block;
+            width: calc(100% + 1.3px);
+            height: auto;
+        }
+        
+        /* Floating Badge Animation */
+        .discount-badge {
+            transition: transform 0.3s ease;
+        }
+        .card-container:hover .discount-badge {
+            transform: scale(1.1);
+        }
+
+        /* Smooth horizontal scroll hiding */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Brush Divider style for the Dark Section */
+        .brush-divider {
+            position: absolute;
+            width: 100%;
+            overflow: hidden;
+            line-height: 0;
+            z-index: 10;
+        }
+        .brush-divider svg {
+            display: block;
+            width: calc(100% + 1.3px);
+            height: 50px;
+        }
+        .brush-top {
+            top: -1px;
+            transform: rotate(180deg);
+        }
+        .brush-bottom {
+            bottom: -1px;
+        }
+
+        /* Topographic Pattern Overlay */
+        .topo-pattern {
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+
+        /* Review Slider Transitions */
+        .review-avatar {
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: absolute;
+        }
+        
+        .review-text-content {
+            transition: opacity 0.4s ease-in-out, transform 0.6s ease-out;
+        }
+        
+        /* Positions for the Orbit */
+        .orbit-pos-0 { /* Center Main */
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1.3);
+            z-index: 30;
+            opacity: 1;
+            filter: grayscale(0%);
+            border-color: #fbbf24 !important; /* yellow-400 */
+        }
+        .orbit-pos-1 { /* Right 1 */
+            top: 30%;
+            left: 80%;
+            transform: translate(-50%, -50%) scale(0.8);
+            z-index: 20;
+            opacity: 0.6;
+            filter: grayscale(20%);
+        }
+        .orbit-pos-2 { /* Right 2 */
+            top: 60%;
+            left: 90%;
+            transform: translate(-50%, -50%) scale(0.6);
+            z-index: 10;
+            opacity: 0.4;
+            filter: grayscale(50%);
+        }
+        .orbit-pos-3 { /* Bottom Right */
+            top: 80%;
+            left: 70%;
+            transform: translate(-50%, -50%) scale(0.5);
+            z-index: 5;
+            opacity: 0.3;
+            filter: grayscale(80%);
+        }
+        .orbit-pos-4 { /* Bottom Left */
+            top: 80%;
+            left: 30%;
+            transform: translate(-50%, -50%) scale(0.5);
+            z-index: 5;
+            opacity: 0.3;
+            filter: grayscale(80%);
+        }
+        .orbit-pos-5 { /* Left 2 */
+            top: 60%;
+            left: 10%;
+            transform: translate(-50%, -50%) scale(0.6);
+            z-index: 10;
+            opacity: 0.4;
+            filter: grayscale(50%);
+        }
+        .orbit-pos-6 { /* Left 1 */
+            top: 30%;
+            left: 20%;
+            transform: translate(-50%, -50%) scale(0.8);
+            z-index: 20;
+            opacity: 0.6;
+            filter: grayscale(20%);
+        }
+
+        /* Quote Icon visibility */
+        .quote-icon {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .orbit-pos-0 .quote-icon {
+            opacity: 1;
+        }
+
+        /* --- SEARCH PAGE STYLES --- */
+
+/* Custom Checkbox Styling */
+.custom-checkbox:checked {
+    background-color: #003940;
+    border-color: #003940;
+}
+.custom-checkbox:checked + div {
+    display: block;
+}
+
+/* Accordion Styles */
+.filter-content {
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+.filter-content.open {
+    max-height: 500px;
+    opacity: 1;
+}
+
+.filter-toggle .fa-chevron-down {
+    transition: transform 0.3s ease;
+}
+
+.filter-toggle.active .fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+/* Calendar Styles */
+.calendar-day {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+    color: #374151;
+}
+.calendar-day:hover {
+    background-color: #f3f4f6;
+}
+.calendar-day.selected {
+    background-color: #003940 !important;
+    color: white !important;
+}
+.calendar-day.in-range {
+    background-color: #ecfdf5;
+    color: #003940;
+}
+
+/* Range Slider Thumb Styling */
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #003940;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px #003940;
+}
+
+input[type=range]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #003940;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px #003940;
+}
+/* --- DETAILS PAGE STYLES --- */
+
+/* Custom Image Grid */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: 200px 200px;
+    gap: 1rem;
+}
+
+.gallery-main {
+    grid-row: 1 / span 2;
+}
+
+@media (max-width: 768px) {
+    .gallery-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+    }
+    .gallery-main {
+        grid-row: auto;
+        height: 300px;
+    }
+}
+
+/* Modal Scrollbar */
+.modal-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+.modal-scroll::-webkit-scrollbar-track {
+    background: #1a1a1a; 
+}
+.modal-scroll::-webkit-scrollbar-thumb {
+    background: #888; 
+    border-radius: 4px;
+}
+.modal-scroll::-webkit-scrollbar-thumb:hover {
+    background: #555; 
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+.topo-pattern {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.custom-shape-divider-top{
+    rotate : 180deg ;
+}
+
+/* --- SEARCH PAGE STYLES --- */
+
+/* Custom Checkbox Styling */
+.custom-checkbox:checked {
+    background-color: #003940;
+    border-color: #003940;
+}
+.custom-checkbox:checked + div {
+    display: block;
+}
+
+/* Accordion Styles - Critical for the sidebar animation */
+.filter-content {
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+.filter-content.open {
+    max-height: 1000px; /* Large enough to fit content */
+    opacity: 1;
+    /* padding-top: 1rem; */ /* Optional depending on layout */
+}
+
+/* Range Slider Thumb Styling */
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #003940;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px #003940;
+    margin-top: -6px; /* Align thumb vertically */
+}
+
+input[type=range]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #003940;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px #003940;
+}
+
+/* Track styling for better alignment */
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 6px;
+    cursor: pointer;
+    background: #e5e7eb;
+    border-radius: 4px;
+}

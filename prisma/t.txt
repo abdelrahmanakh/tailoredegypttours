@@ -1,0 +1,55 @@
+1 -  Regular Availability (Rules) [maps to TourSchedule]
+    UI
+        List of existing rules
+        “Add Rule” button
+
+    Each rule editor:
+        ✔ Active toggle
+        📅 Valid from → valid to (optional)
+        🔁 Recurrence type:
+            Weekly
+            Monthly
+            Specific dates
+        Conditional inputs:
+            Weekly → checkboxes (Sat, Sun, Mon…)
+            Monthly → day of month (1–31)
+            Specific dates → multi-date picker
+
+    Show examples under the form:
+        “Runs every Saturday from March to October”
+
+2- Exceptions (Blocked / Special Days) [maps to TourException]
+    UI
+        Calendar view or list
+        “Add exception” button
+
+    Exception form:
+        📅 Date
+        🚫 Blocked? (yes/no)
+        📝 Reason (optional)
+
+3- Capacity Overrides (Advanced, Optional Section) [maps to TourDateCapacity]
+    UI
+        Collapsible section titled:
+            “Capacity Overrides (Optional)”
+        Table or calendar list:
+            Date
+            Capacity
+            Override active badge
+    Add override:
+        📅 Date
+        👥 Capacity number
+    Add helper text:
+        “Leave empty to use the default tour capacity.”
+
+Preview Calendar
+    At the top of the Schedule tab:
+        Small monthly calendar
+        Visual hints:
+            ✅ Available
+            ❌ Blocked
+            ⚠ Capacity overridden
+        This becomes:
+            Debug tool
+            Confidence booster
+            “Yes this works” reassurance
