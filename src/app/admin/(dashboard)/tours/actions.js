@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { validateTourData } from './validation'
-import { put } from '@vercel/blob'
 
 // -----------------------------------------------------------------------------
 // HELPER: VALIDATION LOGIC
@@ -234,36 +233,15 @@ export async function setPrimaryImage(tourId, imageId) {
 // and updating the Alt Text of existing ones.
 export async function upsertTourImage(formData) {
   const tourId = formData.get('tourId')
-  const imageId = formData.get('imageId')
+  const imageId = formData.get('imageId') // 'new' or UUID
   const languageId = formData.get('languageId')
-  
-  // 1. HANDLE FILE UPLOAD
-  const file = formData.get('file')
-  let url = formData.get('url') 
-
-  if (file && file.size > 0) {
-    // Clean filename
-    const safeName = file.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase()
-    const filename = `tours/${tourId}/${Date.now()}-${safeName}`
-    
-    // Upload to Vercel Blob
-    // This returns an object: { url: "https://...", ... }
-    const blob = await put(filename, file, {
-      access: 'public',
-    });
-    
-    // Use the permanent URL from Vercel Blob
-    url = blob.url 
-  }
-
-  // 2. VALIDATION
-  if (!url && (!imageId || imageId === 'new')) {
-     throw new Error("Please select an image file to upload.")
-  }
-
+  const url = formData.get('url')
   const altText = formData.get('altText')
+
   const order = parseInt(formData.get('order') || '0')
   const isPrimary = formData.get('isPrimary') === 'on'
+
+  if (!url) throw new Error("Image URL is required")
 
   if (isPrimary) {
     await prisma.tourImage.updateMany({
@@ -272,12 +250,12 @@ export async function upsertTourImage(formData) {
     })
   }
 
-  // 3. DATABASE UPDATE
+  // A. UPDATE EXISTING
   if (imageId && imageId !== 'new') {
     await prisma.tourImage.update({
       where: { id: imageId },
       data: { 
-        url, // Updates the URL if a new file was uploaded
+        url, // Update URL (Shared across languages)
         order,
         isPrimary,
         translations: {
@@ -289,10 +267,13 @@ export async function upsertTourImage(formData) {
         }
       }
     })
-  } else {
-    // Check if it's the first image
+  } 
+  // B. CREATE NEW
+  else {
+    // Check if it's the first image (if so, make it primary automatically)
     const count = await prisma.tourImage.count({ where: { tourId } })
-    const makePrimary = count === 0 || isPrimary
+    const isPrimaryInput = formData.get('isPrimary') === 'on'
+    const makePrimary = count === 0 || isPrimaryInput
 
     await prisma.tourImage.create({
       data: {
@@ -307,7 +288,7 @@ export async function upsertTourImage(formData) {
     })
   }
 
-  // 4. VALIDATE TOUR STATUS
+  // We re-fetch the tour to ensure a Primary Image still exists
   const tour = await prisma.tour.findUnique({
     where: { id: tourId },
     include: { 
@@ -318,8 +299,10 @@ export async function upsertTourImage(formData) {
     }
   })
 
+  // Run Validation
   const { hard } = validateTourData(tour)
 
+  // If we broke a Hard Rule (e.g., "Missing Primary Cover Image"), Force Deactivate
   if (hard.length > 0) {
     await prisma.tour.update({ where: { id: tourId }, data: { isActive: false } })
   }
