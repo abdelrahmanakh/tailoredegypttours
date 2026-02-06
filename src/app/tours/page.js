@@ -4,7 +4,7 @@ import SearchCard from '@/features/tours-list/components/SearchCard'
 import TourSortButton from '@/features/tours-list/components/TourSortButton'
 import { getTours } from '@/features/tours-list/actions/getTours'
 
-export default async function ToursPage({ props }) {
+export default async function ToursPage(props) {
   // 1. Fetch data on the server
   const searchParams = await props.searchParams;
   const filteredTours = await getTours(searchParams);
