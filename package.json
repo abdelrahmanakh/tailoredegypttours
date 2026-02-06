@@ -12,6 +12,7 @@
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
     "@prisma/config": "^7.3.0",
+    "@vercel/blob": "^2.1.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "leaflet": "^1.9.4",
