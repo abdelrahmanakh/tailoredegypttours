@@ -166,7 +166,7 @@ export default function TourDetailsPage() {
                     <h2 className="text-2xl font-bold text-primary mb-6">Tour Map</h2>
                     <div className="rounded-2xl overflow-hidden shadow-lg h-96 relative border border-gray-200 bg-gray-100">
                         {/* Placeholder for map iframe */}
-                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d158858.18237072596!2d-0.10159865000000001!3d51.52864165!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47d8a00baf21de75%3A0x52963a5addd52a99!2sLondon%2C%20UK!5e0!3m2!1sen!2seg!4v1689623863481!5m2!1sen!2seg" width="100%" height="100%" style={{ border: 0, filter: 'grayscale(100%) contrast(1.2)' }} allowFullScreen="" loading="lazy"></iframe>
+                        <iframe src="https://googleusercontent.com/maps.google.com/1" width="100%" height="100%" style={{ border: 0, filter: 'grayscale(100%) contrast(1.2)' }} allowFullScreen="" loading="lazy"></iframe>
                     </div>
                 </div>
 
