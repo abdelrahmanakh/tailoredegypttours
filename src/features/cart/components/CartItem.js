@@ -14,7 +14,7 @@ export default function CartItem({ item, onRemove }) {
             <div>
                 <div className="flex justify-between items-start mb-2">
                     <h3 className="text-lg font-bold text-primary leading-tight">
-                        <Link href={`/tours/${id}`} className="hover:text-teal-600 transition">{item.title}</Link>
+                        <Link href={`/tours/${item.id}`} className="hover:text-teal-600 transition">{item.title}</Link>
                     </h3>
                     <button onClick={() => onRemove(item.id)} className="text-gray-400 hover:text-red-500 transition p-1">
                         <i className="fa-regular fa-trash-can"></i>
