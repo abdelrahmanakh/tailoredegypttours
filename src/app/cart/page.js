@@ -29,7 +29,7 @@ export default function CartPage() {
 
   return (
     // ADDED pt-28 HERE 👇
-    <div className="bg-gray-50 text-gray-800 font-sans flex flex-col min-h-screen pt-28">
+    <div className="bg-gray-50 text-gray-800 font-sans flex flex-col min-h-screen pt-14">
       <main className="flex-grow container mx-auto px-4 md:px-12 py-10">
         <h1 className="text-3xl font-bold text-primary mb-8">Your Cart ({cartItems.length} Items)</h1>
         {cartItems.length > 0 ? (

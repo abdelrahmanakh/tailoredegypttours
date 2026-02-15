@@ -61,7 +61,9 @@ export default function RelatedTours() {
         >
             <div className="flex gap-6 min-w-full">
                 {relatedTours.map(tour => (
+                  <div key={tour.id} className="w-[22rem] md:w-90 flex-shrink-0 snap-start">
                     <TourCard key={tour.id} {...tour} />
+                    </div>
                 ))}
             </div>
         </div>

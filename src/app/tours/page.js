@@ -1,3 +1,4 @@
+// src/app/tours/page.js (No changes needed, but double check)
 import Link from 'next/link'
 import FilterSidebar from '@/features/tours-list/components/FilterSidebar'
 import SearchCard from '@/features/tours-list/components/SearchCard'
@@ -5,13 +6,12 @@ import TourSortButton from '@/features/tours-list/components/TourSortButton'
 import { getTours } from '@/features/tours-list/actions/getTours'
 
 export default async function ToursPage(props) {
-  // 1. Fetch data on the server
   const searchParams = await props.searchParams;
-  const filteredTours = await getTours(searchParams);
-
+  const filteredTours = await getTours(searchParams); // This now calls the DB version
+  
   return (
-    <div className="bg-gray-50 text-gray-800 font-sans min-h-screen pt-28">
-      <div className="container mx-auto px-4 md:px-12 py-8">
+    <div className="bg-gray-50 text-gray-800 font-sans min-h-screen pt-14">
+      <div className="container mx-auto px-auto md: px-auto py-8">
         
         {/* Breadcrumbs */}
         <div className="mb-8">
@@ -39,7 +39,9 @@ export default async function ToursPage(props) {
                 <div className="space-y-6">
                     {filteredTours.length > 0 ? (
                         filteredTours.map((tour) => (
+                            <div key={tour.id} className="flex-shrink-0 snap-start">
                             <SearchCard key={tour.id} {...tour} />
+                            </div>
                         ))
                     ) : (
                         <div className="text-center py-20 bg-white rounded-xl border border-gray-100">

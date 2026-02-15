@@ -12,9 +12,7 @@ export default function Navbar() {
   // Check if we are on the Home page
   const isHome = pathname === '/';
   
-  if (pathname && pathname.startsWith('/admin') && pathname !== '/admin/login') {
-    return null;
-  }
+
   // Handle Scroll Effect to toggle transparency
   useEffect(() => {
     const handleScroll = () => {
@@ -27,10 +25,11 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
+  if (pathname && pathname.startsWith('/admin') && pathname !== '/admin/login') {
+    return null;
+  }
   return (
-    <nav 
-        className={`fixed w-full top-0 z-50 transition-all duration-300 font-sans px-6 md:px-12 flex justify-between items-center
+    <nav className={`fixed w-full top-0 z-50 transition-all duration-300 font-sans px-6 md:px-12 flex justify-between items-center
         ${isHome && !isScrolled 
             ? 'bg-transparent py-6' // Transparent & Taller on Home (Top)
             : 'bg-primary shadow-lg py-4' // Solid & Compact on Scroll or other pages
@@ -82,14 +81,14 @@ export default function Navbar() {
                 <span>Cart</span>
             </Link>
             
-            <Link href="/signup" className="hover:text-accent transition-colors duration-300 relative group">
+            {/* <Link href="/signup" className="hover:text-accent transition-colors duration-300 relative group">
                 Sign up
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent transition-all group-hover:w-full duration-300"></span>
             </Link>
             
             <Link href="/signin" className="bg-white text-primary px-6 py-2 rounded-full font-bold hover:bg-accent hover:text-primary transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
                 Log in
-            </Link>
+            </Link> */}
         </div>
         
         {/* Mobile Menu Button */}

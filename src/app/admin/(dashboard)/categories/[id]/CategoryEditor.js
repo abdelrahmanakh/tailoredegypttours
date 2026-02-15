@@ -1,5 +1,7 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { upload } from '@vercel/blob/client'
+import ImageUploadBox from '../../../components/ImageUploadBox'
 
 export default function CategoryEditor({ category, languages, saveAction, updateSharedAction }) {
   const [activeLangId, setActiveLangId] = useState(languages[0]?.id)
@@ -38,28 +40,93 @@ export default function CategoryEditor({ category, languages, saveAction, update
   // A. Initialize Shared Draft
   const [sharedDraft, setSharedDraft] = useState({
     slug: category.slug,
+    imageUrl: category.imageUrl || '',
     isFeatured: category.isFeatured,
     featuredOrder: category.featuredOrder ?? 0
   })
+
+  // -- UPLOAD STATE --
+  const [file, setFile] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState(category.imageUrl || '')
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [sizeWarning, setSizeWarning] = useState('')
+  const [uploaderKey, setUploaderKey] = useState(0)
 
   // C. Handle Shared Input Changes
   const handleSharedChange = (field, value) => {
     setSharedDraft(prev => ({ ...prev, [field]: value }))
   }
 
-  // D. Safe Save Handler (Shared)
-  async function handleSharedSave(formData) {
-    try {
-      await updateSharedAction(formData)
-    } catch (error) {
-        alert(error.message)
-    }
+  const handleRemoveImage = () => {
+    setFile(null)
+    setPreviewUrl('')
+    setSharedDraft(prev => ({ ...prev, imageUrl: '' })) 
+    setUploaderKey(prev => prev + 1)
   }
 
+  // D. Safe Save Handler (Shared)
+  const onFileSelect = (selectedFile) => {
+    setSizeWarning('')
+    if (selectedFile.size > 4.5 * 1024 * 1024) { alert("Max size 4.5MB"); return; }
+    if (selectedFile.size > 2 * 1024 * 1024) { setSizeWarning('Warning: Image > 2MB') }
+    
+    setFile(selectedFile)
+    setPreviewUrl(URL.createObjectURL(selectedFile))
+  }
+
+  const onUrlChange = (val) => {
+     setSharedDraft(prev => ({ ...prev, imageUrl: val }))
+     setPreviewUrl(val)
+     setFile(null) 
+  }
+
+  async function handleSharedSave(e) {
+    e.preventDefault() 
+    setIsUploading(true)
+    setUploadProgress(0)
+
+    try {
+        let finalUrl = sharedDraft.imageUrl
+
+        if (file) {
+            const newBlob = await upload(file.name, file, {
+                access: 'public',
+                handleUploadUrl: '/api/upload',
+                onUploadProgress: (p) => setUploadProgress(p.percentage)
+            })
+            finalUrl = newBlob.url
+        }
+
+        const formData = new FormData()
+        formData.append('id', category.id)
+        formData.append('slug', sharedDraft.slug)
+        formData.append('imageUrl', finalUrl) // <--- Added
+        if(sharedDraft.isFeatured) {
+            formData.append('isFeatured', 'on')
+            formData.append('featuredOrder', sharedDraft.featuredOrder)
+        }
+
+        await updateSharedAction(formData)
+        
+        setSharedDraft(prev => ({ ...prev, imageUrl: finalUrl }))
+        setFile(null)
+        setUploadProgress(0)
+        setUploaderKey(prev => prev + 1)
+
+    } catch (error) {
+        alert(error.message)
+    } finally {
+        setIsUploading(false)
+    }
+  }
+  
   // E. Dirty Check (Shared)
   // We compare the Draft vs. the Original Props from DB
   const isSharedDirty = 
     sharedDraft.slug !== category.slug ||
+    (file !== null) ||
+    sharedDraft.imageUrl !== (category.imageUrl || '') ||
     sharedDraft.isFeatured !== category.isFeatured ||
     // Use loose equality (==) for numbers because inputs return strings ('5' vs 5)
     sharedDraft.featuredOrder != (category.featuredOrder ?? 0);
@@ -67,85 +134,62 @@ export default function CategoryEditor({ category, languages, saveAction, update
   return (
     <div className="space-y-8">
       
-      {/* SHARED SETTINGS (Slug Only) */}
-      <form action={handleSharedSave} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-      <div className="flex justify-between items-center border-b pb-4 mb-6">
-          <h3 className="text-sm font-bold text-gray-400 uppercase mb-4 border-b pb-2">Shared Settings</h3>
-          {/* Status Indicator (Read Only) */}
+      {/* SHARED SETTINGS FORM */}
+      <form onSubmit={handleSharedSave} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <div className="flex justify-between items-center border-b pb-4 mb-6">
+          <h3 className="text-sm font-bold text-gray-400 uppercase">Shared Settings</h3>
           <span className={`text-xs font-bold px-2 py-1 rounded ${category.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                 {category.isActive ? 'Active' : 'Draft'}
           </span>
         </div>
-        <input type="hidden" name="id" value={category.id} />
-        <div className="grid grid-cols-1 gap-6">
-          <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">Slug (URL ID)</label>
-            <input name="slug" defaultValue={category.slug} className="w-full border border-gray-300 rounded-lg p-2.5 font-mono text-sm bg-gray-50" />
-          </div>
-        </div>
-        {/* --- FEATURED SECTION (FIXED) --- */}
-        <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-lg border transition-all duration-300 mb-4
-          ${sharedDraft.isFeatured 
-            ? 'bg-yellow-50 border-yellow-200 shadow-sm' 
-            : 'bg-gray-50 border-gray-200'}
-        `}>
-          
-          {/* 1. Toggle */}
-          <div className="flex items-center gap-3">
-            <input 
-              type="checkbox" 
-              name="isFeatured" 
-              id="feat-check"
-              checked={sharedDraft.isFeatured} 
-              onChange={(e) => handleSharedChange('isFeatured', e.target.checked)}
-              className="w-5 h-5 accent-yellow-600 cursor-pointer" 
-            />
-            <label htmlFor="feat-check" className="text-sm font-bold text-gray-700 cursor-pointer select-none">
-              {sharedDraft.isFeatured ? 'Marked as Featured' : 'Not Featured'}
-            </label>
-          </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             {/* LEFT: SLUG & FEATURED */}
+             <div className="space-y-6">
+                <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Slug (URL ID)</label>
+                    <input name="slug" value={sharedDraft.slug} onChange={(e) => handleSharedChange('slug', e.target.value)} className="w-full border border-gray-300 rounded-lg p-3 font-mono text-sm bg-gray-50 outline-none focus:border-primary" />
+                </div>
+                
+                <div className={`p-4 rounded-lg border transition-all duration-300 ${sharedDraft.isFeatured ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="flex items-center gap-3 mb-3">
+                        <input type="checkbox" id="feat-check" checked={sharedDraft.isFeatured} onChange={(e) => handleSharedChange('isFeatured', e.target.checked)} className="w-5 h-5 accent-yellow-600 cursor-pointer" />
+                        <label htmlFor="feat-check" className="text-sm font-bold text-gray-700 cursor-pointer select-none">Mark as Featured</label>
+                    </div>
+                    {sharedDraft.isFeatured && (
+                         <div className="animate-in fade-in">
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Priority Order</label>
+                            <input type="number" value={sharedDraft.featuredOrder} onChange={(e) => handleSharedChange('featuredOrder', e.target.value)} className="w-full border border-yellow-200 rounded-lg p-2 text-sm outline-none focus:ring-1 focus:ring-yellow-500" />
+                        </div>
+                    )}
+                </div>
+             </div>
 
-          {/* 2. Order Input (FIXED LAYOUT) */}
-          <div>
-            <label className={`block text-xs font-bold mb-1 transition-colors
-              ${sharedDraft.isFeatured ? 'text-gray-700' : 'text-gray-400'}
-            `}>
-              Priority Order {sharedDraft.isFeatured && <span className="text-red-500">*</span>}
-            </label>
-            
-            <input 
-              type="number" 
-              name="featuredOrder" 
-              value={sharedDraft.featuredOrder}
-              onChange={(e) => handleSharedChange('featuredOrder', e.target.value)}
-              disabled={!sharedDraft.isFeatured}
-              className={`w-full border rounded-lg p-2.5 text-sm outline-none transition-all
-                ${sharedDraft.isFeatured 
-                  ? 'bg-white border-gray-300 focus:ring-2 focus:ring-yellow-500' 
-                  : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'}
-              `}
-              placeholder="0"
-            />
-            
-            {/* Helper Text - Moved BELOW input so it fits */}
-            <p className={`text-[10px] mt-1 text-left transition-opacity font-mono
-               ${sharedDraft.isFeatured ? 'text-gray-500 opacity-99' : 'opacity-0'}
-            `}>
-              (Higher numbers appear first)
-            </p>
-          </div>
+             {/* RIGHT: IMAGE UPLOADER */}
+             <div>
+                 <ImageUploadBox 
+                    key={uploaderKey} // <--- Pass the Key here
+                    previewUrl={previewUrl}
+                    onFileSelect={onFileSelect}
+                    onRemove={handleRemoveImage}
+                    isUploading={isUploading}
+                    uploadProgress={uploadProgress}
+                    sizeWarning={sizeWarning}
+                    urlValue={sharedDraft.imageUrl}
+                    onUrlChange={onUrlChange}
+                 />
+            </div>
         </div>
-        {/* ---------------------------------- */}
-        <div className="mt-4 text-right">
+
+        <div className="mt-8 pt-4 border-t flex justify-end">
           <button 
-            disabled={!isSharedDirty}
-            className={`text-xs px-4 py-2 rounded font-bold transition shadow-sm
-              ${isSharedDirty 
-                ? 'bg-gray-800 text-white hover:bg-black' 
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'}
+            type="submit" 
+            disabled={!isSharedDirty || isUploading}
+            className={`px-6 py-2 rounded-lg font-bold text-sm transition shadow-sm
+              ${(isSharedDirty || isUploading) ? 'bg-gray-900 text-white hover:bg-black' : 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'}
             `}
           >
-            Update Shared Info
+             {isUploading ? `Uploading ${uploadProgress}%...` : 'Update Shared Info'}
           </button>
         </div>
       </form>
@@ -169,7 +213,6 @@ export default function CategoryEditor({ category, languages, saveAction, update
             )
           })}
         </div>
-
         <form action={handleTransSave} className="p-8">
           <input type="hidden" name="categoryId" value={category.id} />
           <input type="hidden" name="languageId" value={activeLangId} />

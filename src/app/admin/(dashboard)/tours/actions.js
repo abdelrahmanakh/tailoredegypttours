@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { validateTourData } from './validation'
+import { del } from '@vercel/blob';
 
 // -----------------------------------------------------------------------------
 // HELPER: VALIDATION LOGIC
@@ -120,6 +121,20 @@ export async function toggleTourStatus(tourId, shouldActivate) {
 // 3. DELETE PERMANENTLY (Used by AdminTourCard)
 export async function deleteTourPermanently(tourId) {
   try {
+    // A. Fetch all images attached to this tour
+    const tourImages = await prisma.tourImage.findMany({
+      where: { tourId },
+      select: { url: true }
+    });
+    // B. Loop and delete from Vercel Blob
+    // We use Promise.all to delete them in parallel for speed
+    if (tourImages.length > 0) {
+      const deletePromises = tourImages
+        .filter(img => img.url && img.url.includes('public.blob.vercel-storage.com'))
+        .map(img => del(img.url).catch(e => console.error("Failed to delete blob:", img.url)));
+      
+      await Promise.all(deletePromises);
+    }
     await prisma.tour.delete({ where: { id: tourId } });
     revalidatePath('/admin/tours');
     revalidatePath('/tours');
@@ -200,6 +215,16 @@ async function isDefaultLang(langId) {
 export async function deleteTourImage(imageId) {
   const image = await prisma.tourImage.findUnique({ where: { id: imageId } })
   if (!image) return
+  // B. Delete from Vercel Blob (Clean up storage)
+  // We check if it's a Vercel URL to avoid errors with external links
+  if (image.url && image.url.includes('public.blob.vercel-storage.com')) {
+    try {
+      await del(image.url); 
+    } catch (error) {
+      console.error("Vercel Blob Cleanup Failed:", error);
+      // We continue executing. Failing to delete the blob shouldn't stop the DB delete.
+    }
+  }
   const wasPrimary = image.isPrimary;
   await prisma.tourImage.delete({ where: { id: imageId } })
   if (wasPrimary) {
@@ -252,6 +277,13 @@ export async function upsertTourImage(formData) {
 
   // A. UPDATE EXISTING
   if (imageId && imageId !== 'new') {
+    // 1. Fetch current data to check old URL
+    const currentImage = await prisma.tourImage.findUnique({ where: { id: imageId } })
+    
+    // 2. If URL changed, delete the old blob
+    if (currentImage?.url && currentImage.url !== url && currentImage.url.includes('public.blob.vercel-storage.com')) {
+       try { await del(currentImage.url); } catch(e) {}
+    }
     await prisma.tourImage.update({
       where: { id: imageId },
       data: { 

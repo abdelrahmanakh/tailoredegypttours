@@ -1,5 +1,7 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { upload } from '@vercel/blob/client'
+import ImageUploadBox from '../../../components/ImageUploadBox'
 
 export default function DestinationEditor({ destination, languages, saveAction, updateSharedAction }) {
   // -------------------------------------------------------------------------
@@ -50,18 +52,88 @@ export default function DestinationEditor({ destination, languages, saveAction, 
     isFeatured: destination.isFeatured,
     featuredOrder: destination.featuredOrder ?? 0
   })
+  // -- UPLOAD STATE --
+  const [file, setFile] = useState(null) // The file object
+  const [previewUrl, setPreviewUrl] = useState(destination.imageUrl || '')
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [sizeWarning, setSizeWarning] = useState('')
+  const [uploaderKey, setUploaderKey] = useState(0)
 
   // C. Handle Shared Input Changes
   const handleSharedChange = (field, value) => {
     setSharedDraft(prev => ({ ...prev, [field]: value }))
   }
 
+  const handleRemoveImage = () => {
+    setFile(null)
+    setPreviewUrl('')
+    setSharedDraft(prev => ({ ...prev, imageUrl: '' })) // Clear the URL
+    setUploaderKey(prev => prev + 1) // <--- Force Reset
+  }
+
+  // Handle File Selection (Validation + Preview)
+  const onFileSelect = (selectedFile) => {
+    setSizeWarning('')
+    if (selectedFile.size > 4.5 * 1024 * 1024) {
+       alert("Max size 4.5MB"); return;
+    }
+    if (selectedFile.size > 2 * 1024 * 1024) {
+       setSizeWarning('Warning: Image > 2MB')
+    }
+    
+    setFile(selectedFile)
+    setPreviewUrl(URL.createObjectURL(selectedFile))
+  }
+
+  // Handle URL Text Input (Manual Paste)
+  const onUrlChange = (val) => {
+    setSharedDraft(prev => ({ ...prev, imageUrl: val }))
+    setPreviewUrl(val)
+    setFile(null) // Clear file if they manually paste
+ }
+
   // D. Safe Save Handler (Shared)
-  async function handleSharedSave(formData) {
+  async function handleSharedSave(e) {
+    e.preventDefault()
+    setIsUploading(true)
+    setUploadProgress(0)
     try {
+      let finalUrl = sharedDraft.imageUrl
+
+      // 1. Upload if file exists
+      if (file) {
+          const newBlob = await upload(file.name, file, {
+              access: 'public',
+              handleUploadUrl: '/api/upload',
+              onUploadProgress: (p) => setUploadProgress(p.percentage)
+          })
+          finalUrl = newBlob.url
+      }
+
+      // 2. Prepare FormData manually since we prevented default
+      const formData = new FormData()
+      formData.append('id', destination.id)
+      formData.append('slug', sharedDraft.slug)
+      formData.append('imageUrl', finalUrl)
+      if(sharedDraft.isFeatured) {
+          formData.append('isFeatured', 'on')
+          formData.append('featuredOrder', sharedDraft.featuredOrder)
+      }
+
+      // 3. Call Server Action
       await updateSharedAction(formData)
+      
+      // 4. Update local state
+      setSharedDraft(prev => ({ ...prev, imageUrl: finalUrl }))
+      setFile(null) // Reset file
+      setUploadProgress(0)
+      setUploaderKey(prev => prev + 1)
+
     } catch (error) {
-      alert(error.message)
+        alert(error.message)
+    } finally {
+        setIsUploading(false)
     }
   }
 
@@ -69,9 +141,9 @@ export default function DestinationEditor({ destination, languages, saveAction, 
   // We compare the Draft vs. the Original Props from DB
   const isSharedDirty = 
     sharedDraft.slug !== destination.slug ||
+    (file !== null) || // Dirty if new file selected
     sharedDraft.imageUrl !== (destination.imageUrl || '') ||
     sharedDraft.isFeatured !== destination.isFeatured ||
-    // Use loose equality (==) for numbers because inputs return strings ('5' vs 5)
     sharedDraft.featuredOrder != (destination.featuredOrder ?? 0);
 
   // -------------------------------------------------------------------------
@@ -79,103 +151,94 @@ export default function DestinationEditor({ destination, languages, saveAction, 
   // -------------------------------------------------------------------------
   return (
     <div className="space-y-8">
-      {/* === SHARED SETTINGS FORM === */}
-      <form action={handleSharedSave} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">        
+      
+      {/* SHARED SETTINGS FORM */}
+      <form onSubmit={handleSharedSave} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">        
         <div className="flex justify-between items-center border-b pb-4 mb-6">
             <h3 className="text-sm font-bold text-gray-400 uppercase">Shared Settings</h3>
-            {/* Status Indicator (Read Only) */}
             <span className={`text-xs font-bold px-2 py-1 rounded ${destination.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                            {destination.isActive ? 'Active' : 'Draft'}
+                {destination.isActive ? 'Active' : 'Draft'}
             </span>
         </div>
 
-        <input type="hidden" name="id" value={destination.id} />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          {/* ... Slug and Image inputs ... */}
-          <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">Slug (URL ID)</label>
-            <input 
-              name="slug" 
-              value={sharedDraft.slug}
-              onChange={(e) => handleSharedChange('slug', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg p-2.5 font-mono text-sm bg-gray-50 focus:bg-white transition-colors outline-none focus:border-primary" 
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">Image URL</label>
-            <input 
-              name="imageUrl" 
-              value={sharedDraft.imageUrl}
-              onChange={(e) => handleSharedChange('imageUrl', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-primary" 
-            />
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            {/* LEFT: SLUG & FEATURED */}
+            <div className="space-y-6">
+                <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Slug (URL ID)</label>
+                    <input 
+                    name="slug" 
+                    value={sharedDraft.slug}
+                    onChange={(e) => handleSharedChange('slug', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg p-3 font-mono text-sm bg-gray-50 focus:bg-white transition-colors outline-none focus:border-primary" 
+                    />
+                </div>
+
+                <div className={`p-4 rounded-lg border transition-all duration-300
+                    ${sharedDraft.isFeatured ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'}
+                `}>
+                    <div className="flex items-center gap-3 mb-3">
+                        <input 
+                            type="checkbox" 
+                            id="feat-check"
+                            checked={sharedDraft.isFeatured} 
+                            onChange={(e) => handleSharedChange('isFeatured', e.target.checked)}
+                            className="w-5 h-5 accent-yellow-600 cursor-pointer" 
+                        />
+                        <label htmlFor="feat-check" className="text-sm font-bold text-gray-700 cursor-pointer select-none">
+                            Mark as Featured
+                        </label>
+                    </div>
+                    
+                    {sharedDraft.isFeatured && (
+                        <div className="animate-in fade-in slide-in-from-top-2">
+                             <label className="block text-xs font-bold text-gray-500 mb-1">Priority Order</label>
+                             <input 
+                                type="number" 
+                                value={sharedDraft.featuredOrder}
+                                onChange={(e) => handleSharedChange('featuredOrder', e.target.value)}
+                                className="w-full border border-yellow-200 rounded-lg p-2 text-sm outline-none focus:ring-1 focus:ring-yellow-500"
+                            />
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* RIGHT: IMAGE UPLOADER */}
+            <div>
+                 <ImageUploadBox 
+                    key={uploaderKey} // <--- Pass Key
+                    previewUrl={previewUrl}
+                    onFileSelect={onFileSelect}
+                    onRemove={handleRemoveImage}
+                    isUploading={isUploading}
+                    uploadProgress={uploadProgress}
+                    sizeWarning={sizeWarning}
+                    urlValue={sharedDraft.imageUrl}
+                    onUrlChange={onUrlChange}
+                 />
+            </div>
+
         </div>
 
-        {/* ... Featured Section (Unchanged) ... */}
-        <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-lg border transition-all duration-300 mb-4 items-start
-          ${sharedDraft.isFeatured 
-            ? 'bg-yellow-50 border-yellow-200 shadow-sm' 
-            : 'bg-gray-50 border-gray-200'}
-        `}>
-          <div>
-            <div className="block text-xs font-bold mb-1 opacity-0 select-none">Spacer</div>
-            <div className="flex items-center gap-3 h-[42px]">
-              <input 
-                type="checkbox" 
-                name="isFeatured" 
-                id="feat-check"
-                checked={sharedDraft.isFeatured} 
-                onChange={(e) => handleSharedChange('isFeatured', e.target.checked)}
-                className="w-5 h-5 accent-yellow-600 cursor-pointer flex-shrink-0" 
-              />
-              <label htmlFor="feat-check" className="text-sm font-bold text-gray-700 cursor-pointer select-none">
-                {sharedDraft.isFeatured ? 'Marked as Featured' : 'Not Featured'}
-              </label>
-            </div>
-          </div>
-          <div className="w-full min-w-0">
-            <label className={`block text-xs font-bold mb-1 transition-colors whitespace-nowrap text-left
-              ${sharedDraft.isFeatured ? 'text-gray-700' : 'text-gray-400'}
-            `}>
-              Priority Order {sharedDraft.isFeatured && <span className="text-red-500">*</span>}
-            </label>
-            <input 
-              type="number" 
-              name="featuredOrder" 
-              value={sharedDraft.featuredOrder}
-              onChange={(e) => handleSharedChange('featuredOrder', e.target.value)}
-              disabled={!sharedDraft.isFeatured}
-              className={`w-full border rounded-lg p-2.5 text-sm outline-none transition-all h-[42px]
-                ${sharedDraft.isFeatured ? 'bg-white border-gray-300 focus:ring-2 focus:ring-yellow-500' : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'}
-              `}
-              placeholder="0"
-            />
-            <p className={`text-[10px] mt-1 text-gray-500 font-mono transition-opacity leading-tight text-left pl-1
-               ${sharedDraft.isFeatured ? 'opacity-99' : 'opacity-0'} 
-            `}>
-              Higher numbers show first.
-            </p>
-          </div>
-        </div>
-        <div className="mt-4 text-right">
+        <div className="mt-8 pt-4 border-t flex justify-end">
           <button 
-            disabled={!isSharedDirty}
-            className={`text-xs px-4 py-2 rounded font-bold transition shadow-sm
-              ${isSharedDirty 
-                ? 'bg-gray-800 text-white hover:bg-black' 
+            type="submit"
+            disabled={!isSharedDirty || isUploading}
+            className={`px-6 py-2 rounded-lg font-bold text-sm transition shadow-sm
+              ${(isSharedDirty || isUploading) 
+                ? 'bg-gray-900 text-white hover:bg-black' 
                 : 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'}
             `}
           >
-            Update Shared Info
+            {isUploading ? `Uploading ${uploadProgress}%...` : 'Update Shared Info'}
           </button>
         </div>
       </form>
 
-      {/* === TRANSLATIONS MANAGER (UI Unchanged, logic allows empty saves) === */}
-      {/* ... (Keep the rest of the file exactly as it was) ... */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        {/* ... Tabs ... */}
+      {/* TRANSLATIONS MANAGER (Kept as is) */}
+       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="flex border-b border-gray-200 bg-gray-50 overflow-x-auto">
           {languages.map(lang => {
             const hasContent = drafts[lang.id]?.name || drafts[lang.id]?.description;
@@ -188,7 +251,6 @@ export default function DestinationEditor({ destination, languages, saveAction, 
                 `}
               >
                 <span className="uppercase">{lang.code}</span>
-                {/* Visual indicator for content */}
                 {hasContent && <i className="fa-solid fa-circle-check text-emerald-500 text-[10px]"></i>}
               </button>
             )

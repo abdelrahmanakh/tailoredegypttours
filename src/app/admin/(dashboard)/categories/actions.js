@@ -2,6 +2,7 @@
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { del } from '@vercel/blob'
 
 function sanitizeSlug(text) {
   return text.toString().toLowerCase().trim()
@@ -52,10 +53,11 @@ export async function createCategory(formData) {
   if (newId) redirect(`/admin/categories/${newId}`)
 }
 
-// 2. UPDATE SHARED (Slug only, NO Image)
+// 2. UPDATE SHARED
 export async function updateCategoryShared(formData) {
   const id = formData.get('id')
   const slug = sanitizeSlug(formData.get('slug'))
+  const imageUrl = formData.get('imageUrl')
 
   const isFeatured = formData.get('isFeatured') === 'on'
   const featuredOrder = isFeatured 
@@ -64,11 +66,16 @@ export async function updateCategoryShared(formData) {
 
   // SLUG VALIDATION
   if (!slug || slug.trim() === '') throw new Error("Validation Failed: Slug cannot be empty.")
+  
+  const oldCat = await prisma.category.findUnique({ where: { id } })
+  if (oldCat?.imageUrl && oldCat.imageUrl !== imageUrl && oldCat.imageUrl.includes('public.blob.vercel-storage.com')) {
+      try { await del(oldCat.imageUrl) } catch(e) {}
+  }
 
   // UPDATE CATEGORY
   await prisma.category.update({
     where: { id },
-    data: { slug, isFeatured, featuredOrder }
+    data: { slug, imageUrl, isFeatured, featuredOrder }
   })
   
   revalidatePath(`/admin/categories/${id}`)
@@ -124,6 +131,13 @@ export async function saveTranslation(formData) {
 // 4. DELETE
 export async function deleteCategory(id) {
   try {
+    // A. Find the record first
+    const cat = await prisma.category.findUnique({ where: { id } })
+    
+    if (cat?.imageUrl && cat.imageUrl.includes('public.blob.vercel-storage.com')) {
+       // B. Delete the file from Vercel
+       try { await del(cat.imageUrl) } catch(e) { console.error("Blob delete failed", e) }
+    }
     await prisma.category.delete({ where: { id } })
     revalidatePath('/admin/categories')
   } catch (error) {

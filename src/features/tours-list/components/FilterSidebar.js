@@ -1,41 +1,53 @@
 'use client'
 
-import { useState } from 'react'
-import { useTourFilters } from '../hooks/useTourFilters' // Import the custom hook
+import { useState, useEffect } from 'react'
+import { useTourFilters } from '../hooks/useTourFilters'
 import DatePicker from '@/components/ui/DatePicker'
 
 export default function FilterSidebar() {
-  // 1. Use the hook instead of props
-  const { price, setFilter } = useTourFilters();
+  const { price, setFilter, toggleFilter, isSelected } = useTourFilters();
 
-  // Track open sections by ID
+  // 1. Local state for smooth sliding (visual only)
+  const [localPrice, setLocalPrice] = useState(price);
+
+  // 2. Sync local state if the URL changes (e.g. Back button)
+  useEffect(() => {
+    setLocalPrice(price);
+  }, [price]);
+
+  // Track open sections
   const [openSections, setOpenSections] = useState({
     tourType: true,
     price: true,
-    duration: false,
-    language: false,
-    rating: false,
-    specials: false
+    duration: true,
+    language: true,
+    rating: true,
+    specials: true
   });
 
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [dateRange, setDateRange] = useState("Select Dates");
 
   const toggleSection = (section) => {
-    setOpenSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
+    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
   const handleDateApply = (range) => {
     setDateRange(range);
     setDatePickerOpen(false);
-    // Optional: You could also push dates to the URL here if you wanted
-    // setFilter('dates', range); 
   };
 
-  // Helper to render the arrow rotation class
+  // 3. Handle Slider Logic
+  const handleSliderChange = (e) => {
+    // Just update the number on screen, don't search yet
+    setLocalPrice(e.target.value);
+  };
+
+  const handleSliderCommit = () => {
+    // NOW update the URL and trigger search
+    setFilter('price', localPrice);
+  };
+
   const getArrowClass = (isOpen) => 
     `fa-solid fa-chevron-down text-xs transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`;
 
@@ -57,7 +69,6 @@ export default function FilterSidebar() {
                     className="bg-transparent text-primary text-sm font-bold w-full outline-none cursor-pointer pointer-events-none" 
                 />
             </div>
-
             {datePickerOpen && (
                 <DatePicker 
                     onClose={() => setDatePickerOpen(false)} 
@@ -79,21 +90,25 @@ export default function FilterSidebar() {
                 </button>
                 <div className={`filter-content mt-4 ${openSections.tourType ? 'open' : ''}`}>
                     <div className="space-y-3">
-                        {['Nature Tours', 'Adventure Tours', 'Cultural Tours', 'Food Tours', 'City Tours', 'Cruises Tours'].map((type) => (
+                        {['Nature', 'Adventure', 'Cultural', 'Food', 'City', 'Cruises'].map((type) => (
                             <label key={type} className="flex items-center gap-3 cursor-pointer group">
-                                <div className="relative w-5 h-5 border-2 border-gray-300 rounded flex items-center justify-center transition group-hover:border-primary">
-                                    <input type="checkbox" className="peer appearance-none absolute inset-0 w-full h-full cursor-pointer" />
-                                    <i className="fa-solid fa-check text-primary text-xs opacity-0 peer-checked:opacity-100 transition-opacity duration-200"></i>
+                                <div className={`relative w-5 h-5 border-2 rounded flex items-center justify-center transition ${isSelected('type', type) ? 'border-primary bg-primary' : 'border-gray-300 group-hover:border-primary'}`}>
+                                    <input 
+                                        type="checkbox" 
+                                        className="peer appearance-none absolute inset-0 w-full h-full cursor-pointer"
+                                        checked={isSelected('type', type)}
+                                        onChange={() => toggleFilter('type', type)}
+                                    />
+                                    {isSelected('type', type) && <i className="fa-solid fa-check text-white text-xs"></i>}
                                 </div>
                                 <span className="text-sm text-gray-600 group-hover:text-primary transition">{type}</span>
                             </label>
                         ))}
                     </div>
-                    <a href="#" className="text-yellow-600 text-xs font-bold mt-3 block hover:underline">See More</a>
                 </div>
             </div>
 
-            {/* 2. Price Filter (UPDATED) */}
+            {/* 2. Price Filter (SMOOTH SLIDER) */}
             <div className="border-t border-gray-100 py-4">
                 <button 
                     className={`flex justify-between items-center w-full text-primary font-bold text-sm filter-toggle ${openSections.price ? 'active' : ''}`} 
@@ -103,14 +118,15 @@ export default function FilterSidebar() {
                 </button>
                 <div className={`filter-content mt-4 ${openSections.price ? 'open' : ''}`}>
                     <div className="px-2">
-                        <div className="text-center mb-2 font-bold text-primary text-sm">Up to ${price}</div>
+                        <div className="text-center mb-2 font-bold text-primary text-sm">Up to ${localPrice}</div>
                         <input 
                             type="range" 
                             min="40" 
                             max="1000" 
-                            value={price} 
-                            // 2. Update URL on change
-                            onChange={(e) => setFilter('price', e.target.value)} 
+                            value={localPrice} 
+                            onChange={handleSliderChange}     // Updates local state (Smooth)
+                            onMouseUp={handleSliderCommit}    // Updates URL on release (Mouse)
+                            onTouchEnd={handleSliderCommit}   // Updates URL on release (Touch)
                             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary" 
                         />
                         <div className="flex justify-between text-xs text-gray-500 mt-2 font-medium"><span>$40</span><span>$1000</span></div>
@@ -128,13 +144,22 @@ export default function FilterSidebar() {
                 </button>
                 <div className={`filter-content mt-4 ${openSections.duration ? 'open' : ''}`}>
                     <div className="space-y-3">
-                        {['1 Day', '2-4 Days', '5+ Days'].map((d) => (
-                            <label key={d} className="flex items-center gap-3 cursor-pointer group">
-                                <div className="relative w-5 h-5 border-2 border-gray-300 rounded flex items-center justify-center transition group-hover:border-primary">
-                                    <input type="checkbox" className="peer appearance-none absolute inset-0 w-full h-full cursor-pointer" />
-                                    <i className="fa-solid fa-check text-primary text-xs opacity-0 peer-checked:opacity-100"></i>
+                        {[
+                            { label: '1 Day', value: '1' },
+                            { label: '2-4 Days', value: '2-4' },
+                            { label: '5+ Days', value: '5+' }
+                        ].map((d) => (
+                            <label key={d.value} className="flex items-center gap-3 cursor-pointer group">
+                                <div className={`relative w-5 h-5 border-2 rounded flex items-center justify-center transition ${isSelected('duration', d.value) ? 'border-primary bg-primary' : 'border-gray-300 group-hover:border-primary'}`}>
+                                    <input 
+                                        type="checkbox" 
+                                        className="peer appearance-none absolute inset-0 w-full h-full cursor-pointer"
+                                        checked={isSelected('duration', d.value)}
+                                        onChange={() => toggleFilter('duration', d.value)}
+                                    />
+                                    {isSelected('duration', d.value) && <i className="fa-solid fa-check text-white text-xs"></i>}
                                 </div>
-                                <span className="text-sm text-gray-600 group-hover:text-primary transition">{d}</span>
+                                <span className="text-sm text-gray-600 group-hover:text-primary transition">{d.label}</span>
                             </label>
                         ))}
                     </div>
@@ -153,9 +178,14 @@ export default function FilterSidebar() {
                      <div className="space-y-3">
                         {['English', 'German', 'French', 'Spanish'].map((l) => (
                             <label key={l} className="flex items-center gap-3 cursor-pointer group">
-                                <div className="relative w-5 h-5 border-2 border-gray-300 rounded flex items-center justify-center transition group-hover:border-primary">
-                                    <input type="checkbox" className="peer appearance-none absolute inset-0 w-full h-full cursor-pointer" />
-                                    <i className="fa-solid fa-check text-primary text-xs opacity-0 peer-checked:opacity-100"></i>
+                                <div className={`relative w-5 h-5 border-2 rounded flex items-center justify-center transition ${isSelected('lang', l) ? 'border-primary bg-primary' : 'border-gray-300 group-hover:border-primary'}`}>
+                                    <input 
+                                        type="checkbox" 
+                                        className="peer appearance-none absolute inset-0 w-full h-full cursor-pointer"
+                                        checked={isSelected('lang', l)}
+                                        onChange={() => toggleFilter('lang', l)}
+                                    />
+                                    {isSelected('lang', l) && <i className="fa-solid fa-check text-white text-xs"></i>}
                                 </div>
                                 <span className="text-sm text-gray-600 group-hover:text-primary transition">{l}</span>
                             </label>
@@ -176,9 +206,14 @@ export default function FilterSidebar() {
                     <div className="space-y-3">
                          {[5, 4, 3].map((star) => (
                             <label key={star} className="flex items-center gap-3 cursor-pointer group">
-                                <div className="relative w-5 h-5 border-2 border-gray-300 rounded flex items-center justify-center transition group-hover:border-primary">
-                                    <input type="checkbox" className="peer appearance-none absolute inset-0 w-full h-full cursor-pointer" />
-                                    <i className="fa-solid fa-check text-primary text-xs opacity-0 peer-checked:opacity-100"></i>
+                                <div className={`relative w-5 h-5 border-2 rounded flex items-center justify-center transition ${isSelected('rating', star) ? 'border-primary bg-primary' : 'border-gray-300 group-hover:border-primary'}`}>
+                                    <input 
+                                        type="checkbox" 
+                                        className="peer appearance-none absolute inset-0 w-full h-full cursor-pointer"
+                                        checked={isSelected('rating', star)}
+                                        onChange={() => toggleFilter('rating', star)}
+                                    />
+                                    {isSelected('rating', star) && <i className="fa-solid fa-check text-white text-xs"></i>}
                                 </div>
                                 <div className="flex text-yellow-500 text-xs">
                                      {[...Array(5)].map((_, i) => (
@@ -203,9 +238,14 @@ export default function FilterSidebar() {
                 <div className={`filter-content mt-4 ${openSections.specials ? 'open' : ''}`}>
                     <div className="space-y-3">
                         <label className="flex items-center gap-3 cursor-pointer group">
-                            <div className="relative w-5 h-5 border-2 border-gray-300 rounded flex items-center justify-center transition group-hover:border-primary">
-                                <input type="checkbox" className="peer appearance-none absolute inset-0 w-full h-full cursor-pointer" />
-                                <i className="fa-solid fa-check text-primary text-xs opacity-0 peer-checked:opacity-100"></i>
+                            <div className={`relative w-5 h-5 border-2 rounded flex items-center justify-center transition ${isSelected('special', 'free-cancel') ? 'border-primary bg-primary' : 'border-gray-300 group-hover:border-primary'}`}>
+                                <input 
+                                    type="checkbox" 
+                                    className="peer appearance-none absolute inset-0 w-full h-full cursor-pointer" 
+                                    checked={isSelected('special', 'free-cancel')}
+                                    onChange={() => toggleFilter('special', 'free-cancel')}
+                                />
+                                {isSelected('special', 'free-cancel') && <i className="fa-solid fa-check text-white text-xs"></i>}
                             </div>
                             <span className="text-sm text-gray-600 group-hover:text-primary transition">Free Cancellation</span>
                         </label>

@@ -2,6 +2,7 @@
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { del } from '@vercel/blob'
 
 function sanitizeSlug(text) {
   return text.toString().toLowerCase().trim()
@@ -68,6 +69,15 @@ export async function updateDestinationShared(formData) {
   // 1. SLUG VALIDATION
   if (!slug || slug.trim() === '') {
     throw new Error("Validation Failed: Slug cannot be empty.")
+  }
+
+  const oldDest = await prisma.destination.findUnique({ where: { id } })
+  if (oldDest?.imageUrl && oldDest.imageUrl !== imageUrl && oldDest.imageUrl.includes('public.blob.vercel-storage.com')) {
+    try { 
+      await del(oldDest.imageUrl) 
+    } catch(e) {
+      console.error("Blob cleanup failed:", e)
+    }
   }
 
   // 2. UPDATE DESTINATION
@@ -137,8 +147,15 @@ export async function toggleDestinationStatus(id, newStatus) {
 // 4. DELETE
 export async function deleteDestination(id) {
   try {
-  await prisma.destination.delete({ where: { id } })
-  revalidatePath('/admin/destinations')
+    // A. Find the record first
+    const dest = await prisma.destination.findUnique({ where: { id } })
+    
+    if (dest?.imageUrl && dest.imageUrl.includes('public.blob.vercel-storage.com')) {
+       // B. Delete the file from Vercel
+       try { await del(dest.imageUrl) } catch(e) { console.error("Blob delete failed", e) }
+    }    
+    await prisma.destination.delete({ where: { id } })
+    revalidatePath('/admin/destinations')
   } catch (error) {
     console.error("Delete error:", error)
   }

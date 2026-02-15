@@ -3,16 +3,16 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
 export default function TourCard({ 
-  id, image, location, title, description, rating, reviews, duration, price, 
-  onRemove // <--- New Prop
+  id, slug, image, location, title, description, rating, reviews, duration, price, 
+  onRemove 
 }) {
   const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
     const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-    const exists = favorites.some(item => item.title === title);
+    const exists = favorites.some(item => item.id === id); // Better to check by ID
     setIsFavorite(exists);
-  }, [title]);
+  }, [id]);
 
   const toggleFavorite = (e) => {
     e.preventDefault(); 
@@ -21,12 +21,11 @@ export default function TourCard({
     let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
     
     if (isFavorite) {
-        // Remove
-        favorites = favorites.filter(item => item.title !== title);
-        if (onRemove) onRemove(title); // <--- Notify parent
+        favorites = favorites.filter(item => item.id !== id);
+        if (onRemove) onRemove(id);
     } else {
-        // Add
-        const newTour = { id, image, location, title, description, rating, reviews, duration, price };
+        // Save the slug in favorites too so we can link back easily later
+        const newTour = { id, slug, image, location, title, description, rating, reviews, duration, price };
         favorites.push(newTour);
     }
 
@@ -34,8 +33,11 @@ export default function TourCard({
     setIsFavorite(!isFavorite);
   };
 
+  // FIX: Use slug if available, fallback to id only if necessary (or '#' to prevent 404)
+  const linkHref = slug ? `/tours/${slug}` : `/tours/${id}`;
+
   return (
-    <Link href={`/tours/${id}`} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-xl transition duration-300 block relative group/card h-full flex flex-col">
+    <Link href={linkHref} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-xl transition duration-300 block relative group/card h-full flex flex-col">
         
         <div className="h-48 relative flex-shrink-0">
             <img src={image} alt={title} className="w-full h-full object-cover transition duration-500 group-hover/card:scale-105" />
@@ -58,19 +60,20 @@ export default function TourCard({
                 <span>{location}</span>
             </div>
             
-            <h3 className="text-primary font-bold text-lg leading-tight mb-2 line-clamp-2 min-h-[3.5rem]">
+            <h3 className="text-primary font-bold text-lg leading-tight mb-2 line-clamp-2 min-h-[1.5rem]">
                 {title}
             </h3>
-            
+
             {description && (
                 <p className="text-[10px] text-gray-500 line-clamp-3 mb-3 flex-grow">
                     {description}
                 </p>
             )}
 
+            
             <div className="flex items-center gap-1 text-yellow-500 text-xs mb-4">
                 {[...Array(5)].map((_, i) => (
-                    <i key={i} className={`fa-solid ${i < Math.floor(rating) ? 'fa-star' : 'fa-star-half-stroke'}`}></i>
+                    <i key={i} className={` ${i < Math.floor(rating) ? 'fa-solid fa-star' : 'fa-regular fa-star'}`}></i>
                 ))}
                 <span className="text-gray-400 ml-1">{rating} ({reviews})</span>
             </div>

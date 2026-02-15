@@ -37,20 +37,20 @@ export default function FavoritesPage() {
 
   return (
     // ADDED pt-28 HERE 👇
-    <div className="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col pt-28">
+    <div className="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col pt-20">
 
       {/* Page Header */}
-      <div className="bg-primary py-12 text-white relative overflow-hidden">
+      <div className="py-6 text-primary relative overflow-hidden">
          <div className="absolute inset-0 opacity-10 pattern-bg"></div>
          <div className="container mx-auto px-4 md:px-12 relative z-10">
             <h1 className="text-3xl md:text-4xl font-bold mb-2">My Wishlist</h1>
-            <div className="text-xs text-emerald-100/80">
-                <Link href="/" className="hover:text-white">Home</Link> &gt; <span>Wishlist</span>
+            <div className="text-xs text-gray-500 mb-2">
+                <Link href="/" className="hover:text-black">Home</Link> &gt; <span class="text-primary font-medium ml-1">Wishlist</span>
             </div>
          </div>
       </div>
 
-      <div className="container mx-auto px-4 md:px-12 py-12 flex-grow">
+      <div className="container mx-auto px-4 md:px-12 flex-grow">
         
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8 min-h-[500px]">
             <div className="flex justify-between items-center mb-8 pb-6 border-b border-gray-100">

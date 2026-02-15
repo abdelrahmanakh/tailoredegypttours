@@ -2,14 +2,17 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
-export default function SearchCard({ id, title, location, price, rating, reviews, duration, image, description }) {
-  const [isFavorite, setIsFavorite] = useState(false);
+export default function SearchCard({ 
+  id, slug, image, location, title, description, rating, reviews, duration, price, category, freeCancellation 
+}) {
+
+    const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
     const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-    const exists = favorites.some(item => item.title === title);
+    const exists = favorites.some(item => item.id === id); // Better to check by ID
     setIsFavorite(exists);
-  }, [title]);
+  }, [id]);
 
   const toggleFavorite = (e) => {
     e.preventDefault();
@@ -17,19 +20,23 @@ export default function SearchCard({ id, title, location, price, rating, reviews
 
     let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
     if (isFavorite) {
-        favorites = favorites.filter(item => item.title !== title);
+        favorites = favorites.filter(item => item.id !== id);
+        if (onRemove) onRemove(id);
     } else {
-        const newTour = { id, title, location, price, rating, reviews, duration, image, description };
+        // Save the slug in favorites too so we can link back easily later
+        const newTour = { id, slug, image, location, title, description, rating, reviews, duration, price };
         favorites.push(newTour);
     }
     localStorage.setItem('favorites', JSON.stringify(favorites));
     setIsFavorite(!isFavorite);
   };
 
+    const linkHref = slug ? `/tours/${slug}` : `/tours/${id}`;
+
   return (
-    <Link href={`/tours/${id}`} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row hover:shadow-md transition duration-300 block no-underline group">
+    <Link href={linkHref} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row hover:shadow-md transition duration-300 block no-underline group ">
         {/* Image */}
-        <div className="w-full md:w-1/3 h-56 md:h-auto relative">
+        <div className="w-full md:w-1/3 h-56 md:h-1/9 relative">
             <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
             <button 
                 onClick={toggleFavorite}
@@ -58,7 +65,7 @@ export default function SearchCard({ id, title, location, price, rating, reviews
                 <div className="flex items-center gap-2 mb-2">
                     <div className="flex text-yellow-400 text-xs">
                         {[...Array(5)].map((_, i) => (
-                            <i key={i} className={`fa-solid ${i < Math.floor(rating) ? 'fa-star' : 'fa-star-half-stroke'}`}></i>
+                            <i key={i} className={` ${i < Math.floor(rating) ? 'fa-solid fa-star' : 'fa-regular fa-star'}`}></i>
                         ))}
                     </div>
                     <span className="text-primary font-bold text-sm">{rating}</span>

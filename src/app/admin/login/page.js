@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { setAdminCookie } from './actions'
+import { loginAdmin } from './actions'
 
 export default function AdminLogin() {
   const [username, setUsername] = useState('')
@@ -11,17 +11,27 @@ export default function AdminLogin() {
 
   async function handleLogin(e) {
     e.preventDefault() // Prevent form reload
+    setError('') // Clear previous errors
     
-    const success = await setAdminCookie(username, password)
+    // 1. Wrap your data in a FormData object
+    const formData = new FormData()
+    formData.append('email', username) // 'username' here is used as the email
+    formData.append('password', password)
+  
+    // 2. Call the renamed action with the expected arguments
+    // The first argument is 'prevState' (null here), the second is 'formData'
+    const result = await loginAdmin(null, formData)
     
-    if (success) {
+    // 3. Check for the return message
+    if (result?.message) {
+      setError(result.message)
+    } else {
+      // If there is no error message, login was successful
       router.push('/admin')
       router.refresh()
-    } else {
-      setError('Invalid username or password')
     }
   }
-
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm">

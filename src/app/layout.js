@@ -46,7 +46,7 @@ export default function RootLayout({ children }) {
           `
         }} />
       </head>
-      <body className="bg-emerald-50/50" style={{ backgroundColor: '#f8fafc' }}>
+      <body className="antialiased" style={{ backgroundColor: '#f8fafc' }}>
         <Navbar />
         {children}
         <Footer />  

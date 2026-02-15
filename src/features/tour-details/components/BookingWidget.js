@@ -1,50 +1,55 @@
 'use client'
 import { useState } from 'react'
-import DatePicker from '@/components/ui/DatePicker'
+import DatePicker from '@/components/ui/DatePicker' // Reuse your existing one or simple logic
 
-export default function BookingWidget() {
+export default function BookingWidget({ price, priceChild, extras = [] }) {
   const [ticketCounts, setTicketCounts] = useState({ adult: 2, youth: 0, child: 0 });
-  const [addExtra, setAddExtra] = useState(false);
-  
-  // Date Picker State
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [selectedExtras, setSelectedExtras] = useState([]);
+  const [dateWidgetOpen, setDateWidgetOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState("Select Dates");
 
-  const basePrices = { adult: 282, youth: 168, child: 80 };
-  const extraPrice = 40;
+  const basePriceAdult = price ? price / 100 : 0; 
+  const basePriceChild = priceChild ? priceChild / 100 : 0;
+  const basePriceYouth = basePriceAdult * 0.8; // Example logic: Youth is 80% of adult? Or just same as adult
 
   const updateTicket = (type, change) => {
     const newCount = ticketCounts[type] + change;
     if (newCount >= 0) setTicketCounts({ ...ticketCounts, [type]: newCount });
   };
 
-  const calculateTotal = () => {
-    let total = (ticketCounts.adult * basePrices.adult) + 
-                (ticketCounts.youth * basePrices.youth) + 
-                (ticketCounts.child * basePrices.child);
-    if (addExtra) total += extraPrice;
-    return total;
+  const toggleExtra = (id, price) => {
+      if (selectedExtras.some(e => e.id === id)) {
+          setSelectedExtras(selectedExtras.filter(e => e.id !== id));
+      } else {
+          setSelectedExtras([...selectedExtras, { id, price }]);
+      }
   };
 
-  const handleDateApply = (range) => {
-    setSelectedDate(range);
-    setDatePickerOpen(false);
+  const calculateTotal = () => {
+    // Assuming Youth price logic (adjust if your DB has specific youth price)
+    let total = (ticketCounts.adult * basePriceAdult) + 
+                (ticketCounts.youth * basePriceChild) + // Using child price for youth for now as fallback
+                (ticketCounts.child * basePriceChild);
+    
+    // Add extras cost
+    const extrasCost = selectedExtras.reduce((sum, ex) => sum + (ex.price / 100), 0);
+    return total + extrasCost;
   };
 
   return (
-    <div className="sticky top-24 bg-white rounded-2xl shadow-xl border border-gray-100 p-6 z-20">
+    <div className="relatevey top-24 bg-white rounded-2xl shadow-xl border border-gray-100 p-6 z-20">
         <div className="flex items-end gap-1 mb-6">
             <span className="text-sm text-gray-500">From</span>
-            <span className="text-3xl font-bold text-primary">$1,200</span>
+            <span className="text-3xl font-bold text-primary">${basePriceAdult}</span>
         </div>
         
-        {/* Date Input with Picker */}
-        <div className="relative mb-4">
+        {/* Date Selector */}
+        <div className="relative">
             <div 
-                onClick={() => setDatePickerOpen(!datePickerOpen)}
-                className="border border-gray-200 rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary transition bg-white"
+                onClick={() => setDateWidgetOpen(!dateWidgetOpen)} 
+                className="border border-gray-200 rounded-xl p-4 mb-4 flex items-center gap-3 cursor-pointer hover:border-primary transition group"
             >
-                <div className="bg-gray-100 p-2 rounded-lg text-gray-500">
+                <div className="bg-gray-100 p-2 rounded-lg text-gray-500 group-hover:bg-emerald-50 group-hover:text-primary transition">
                     <i className="fa-regular fa-calendar"></i>
                 </div>
                 <div>
@@ -52,61 +57,74 @@ export default function BookingWidget() {
                     <div className="text-sm font-bold text-primary">{selectedDate}</div>
                 </div>
             </div>
-
-            {/* Render DatePicker if open */}
-            {datePickerOpen && (
-                <DatePicker 
-                    onClose={() => setDatePickerOpen(false)} 
-                    onApply={handleDateApply} 
-                />
+            
+            {/* Simple Dropdown Logic for Date (Reuse DatePicker if available, or simple placeholder) */}
+            {dateWidgetOpen && (
+                 <div className="absolute top-full right-0 mt-2 z-50 bg-white shadow-2xl border border-gray-100 w-[300px] p-4 rounded-xl">
+                     <DatePicker 
+                        onClose={() => setDateWidgetOpen(false)} 
+                        onApply={(d) => { setSelectedDate(d); setDateWidgetOpen(false); }} 
+                     />
+                 </div>
             )}
         </div>
 
+        {/* Tickets Section */}
         <div className="mb-6 border-b border-gray-100 pb-6">
              <h4 className="font-bold text-primary mb-3">Tickets</h4>
-             {['adult', 'youth', 'child'].map(type => (
-                 <div key={type} className="flex justify-between items-center mb-3">
-                     <div className="text-sm text-gray-600 capitalize">{type}</div>
-                     <div className="flex items-center gap-3">
-                         <button 
-                            onClick={() => updateTicket(type, -1)} 
-                            className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-primary hover:text-primary transition"
-                         >
-                            -
-                         </button>
-                         <span className="font-bold text-primary">{ticketCounts[type]}</span>
-                         <button 
-                            onClick={() => updateTicket(type, 1)} 
-                            className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-primary hover:text-primary transition"
-                         >
-                            +
-                         </button>
-                     </div>
+             
+             {/* Adult */}
+             <div className="flex justify-between items-center mb-3">
+                 <div className="text-sm text-gray-600">Adult (18+ years)</div>
+                 <div className="flex items-center gap-3">
+                     <button onClick={() => updateTicket('adult', -1)} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-primary hover:text-primary transition">-</button>
+                     <span className="font-bold text-primary">{ticketCounts.adult}</span>
+                     <button onClick={() => updateTicket('adult', 1)} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-primary hover:text-primary transition">+</button>
                  </div>
-             ))}
+             </div>
+             
+             {/* Youth (Optional) */}
+             <div className="flex justify-between items-center">
+                 <div className="text-sm text-gray-600">Child (6-17 years)</div>
+                 <div className="flex items-center gap-3">
+                     <button onClick={() => updateTicket('child', -1)} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-primary hover:text-primary transition">-</button>
+                     <span className="font-bold text-primary">{ticketCounts.child}</span>
+                     <button onClick={() => updateTicket('child', 1)} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-primary hover:text-primary transition">+</button>
+                 </div>
+             </div>
         </div>
 
-        <div className="mb-6 pb-6 border-b border-gray-100">
-            <label className="flex items-center justify-between cursor-pointer group">
-                <div className="flex items-center gap-3">
-                    <input 
-                        type="checkbox" 
-                        checked={addExtra} 
-                        onChange={() => setAddExtra(!addExtra)} 
-                        className="w-4 h-4 accent-primary cursor-pointer" 
-                    />
-                    <span className="text-sm text-gray-600 group-hover:text-primary transition">Add Service</span>
-                </div>
-                <span className="text-sm font-bold text-primary">${extraPrice}</span>
-            </label>
-        </div>
+        {/* Extras Section */}
+        {extras.length > 0 && (
+            <div className="mb-6 pb-6 border-b border-gray-100">
+                <h4 className="font-bold text-primary mb-3">Add Extra</h4>
+                {extras.map(extra => (
+                    <label key={extra.id} className="flex items-center justify-between cursor-pointer mb-3 group">
+                        <div className="flex items-center gap-3">
+                            <div className="w-5 h-5 border border-gray-300 rounded flex items-center justify-center relative">
+                                <input 
+                                    type="checkbox" 
+                                    className="w-full h-full opacity-0 absolute cursor-pointer z-10" 
+                                    onChange={() => toggleExtra(extra.id, extra.price)} 
+                                />
+                                {selectedExtras.some(e => e.id === extra.id) && (
+                                    <div className="w-3 h-3 bg-primary rounded-sm"></div>
+                                )}
+                            </div>
+                            <span className="text-sm text-gray-600">{extra.name}</span>
+                        </div>
+                        <span className="text-sm font-bold text-primary">${extra.price / 100}</span>
+                    </label>
+                ))}
+            </div>
+        )}
 
         <div className="flex justify-between items-center mb-6">
             <span className="text-gray-500 font-bold">Total:</span>
-            <span className="text-2xl font-bold text-primary">${calculateTotal()}</span>
+            <span className="text-2xl font-bold text-primary">${calculateTotal().toFixed(2)}</span>
         </div>
         
-        <button className="bg-primary hover:bg-primary-dark text-white w-full py-4 rounded-xl font-bold text-lg transition shadow-lg">
+        <button className="bg-primary hover:bg-primary-dark text-white w-full py-4 rounded-xl font-bold text-lg transition shadow-lg mb-3">
             Book Now
         </button>
     </div>

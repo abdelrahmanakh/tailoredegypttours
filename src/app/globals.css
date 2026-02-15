@@ -342,3 +342,68 @@ input[type=range]::-webkit-slider-runnable-track {
     background: #e5e7eb;
     border-radius: 4px;
 }
+
+/* 1. Gallery Grid Layout (Fixes Image Scale/Layout) */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: 200px 200px;
+    gap: 1rem;
+}
+
+.gallery-main {
+    grid-row: 1 / span 2;
+}
+
+/* Mobile Responsive adjustment */
+@media (max-width: 768px) {
+    .gallery-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+    }
+    .gallery-main {
+        grid-row: auto;
+        height: 300px;
+    }
+}
+
+/* 2. Calendar Styles */
+.calendar-day {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+.calendar-day:hover {
+    background-color: #f3f4f6;
+}
+.calendar-day.selected {
+    background-color: #003940;
+    color: white;
+}
+.calendar-day.in-range {
+    background-color: #ecfdf5;
+    color: #003940;
+}
+
+/* 3. Hide Scrollbar Utility */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* 4. Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}

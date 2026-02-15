@@ -10,7 +10,7 @@ export default function SignUpPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   return (
-    <div className="bg-gray-50 text-gray-800 font-sans flex flex-col min-h-screen">
+    <div className="bg-gray-50 text-gray-800 font-sans flex flex-col min-h-screen pt-14">
 
       <main className="flex-grow flex items-center justify-center py-12 px-4 md:px-12 bg-gray-50">
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row-reverse max-w-5xl w-full min-h-[650px]">

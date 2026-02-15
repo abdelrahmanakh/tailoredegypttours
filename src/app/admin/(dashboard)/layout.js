@@ -20,7 +20,8 @@ export default function AdminLayout({ children }) {
           <Link href="/admin/categories" className="block p-2 hover:bg-white/10 rounded"><i className="fa-solid fa-layer-group mr-2 w-5"></i> Categories</Link>
           <Link href="/admin/tags" className="block p-2 hover:bg-white/10 rounded"><i className="fa-solid fa-tags mr-2 w-5"></i> Tags</Link>
           <Link href="/admin/languages" className="block p-2 hover:bg-white/10 rounded"><i className="fa-solid fa-globe mr-2 w-5"></i> Languages</Link>
-
+          <Link href="/admin/admins" className="block p-2 hover:bg-white/10 rounded"><i className="fa-solid fa-users-gear mr-2 w-5"></i> Admins</Link>
+          
         </nav>
       </aside>
       <main className="flex-1 ml-64 p-8">{children}</main>

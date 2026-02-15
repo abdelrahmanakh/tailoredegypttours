@@ -281,6 +281,7 @@ model DestinationTranslation {
   languageId    String
   name          String?
   description   String? @db.Text
+  imageAltText   String?
 
   destination Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
   language    Language    @relation(fields: [languageId], references: [id])
@@ -291,6 +292,7 @@ model DestinationTranslation {
 model Category {
   id    String @id @default(uuid())
   slug  String @unique
+  imageUrl  String?
 
   isFeatured    Boolean  @default(false)
   featuredOrder Int?
@@ -309,6 +311,7 @@ model CategoryTranslation {
   languageId String
   name       String?
   description   String? @db.Text
+  imageAltText   String?
 
   category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   language Language @relation(fields: [languageId], references: [id])
@@ -421,13 +424,14 @@ model Review {
   id        String   @id @default(uuid())
   tourId    String
   bookingId String?  @unique 
+  title     String?
   
   name      String
   avatar    String?
   location  String?
   
   rating    Int
-  comment   String   @db.Text
+  comment   String?   @db.Text
   date      DateTime @default(now())
   
   isVisible Boolean  @default(false) 
@@ -436,141 +440,11 @@ model Review {
   booking Booking? @relation(fields: [bookingId], references: [id])
 }
 
-// model Package {
-//   id           String   @id @default(uuid())
-//   slug         String   @unique
-//   durationDays Int
-
-//   priceAdult    Int      // package total price
-//   priceChild    Int      // package total price
-
-//   maxCapacity  Int?     // optional global cap
-
-//   isFeatured    Boolean  @default(false)
-//   featuredOrder Int?
-//   isActive      Boolean @default(false)
-
-//   translations PackageTranslation[]
-//   images        PackageImage[]
-//   itinerary     PackageItinerary[]
-//   FAQs          PackageFaq[]
-//   tags          Tag[]
-
-//   tours         PackageTour[]   // << composition
-
-//   createdAt     DateTime @default(now())
-//   updatedAt     DateTime @updatedAt
-// }
-
-
-// model PackageTour {
-//   id        String @id @default(uuid())
-//   packageId String
-//   tourId    String
-
-//   day       Int      // Day 1, Day 2, etc.
-//   order     Int
-//   isOptional Boolean @default(false)
-
-//   package Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
-//   tour    Tour    @relation(fields: [tourId], references: [id])
-
-//   @@unique([packageId, tourId])
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-// }
-
-// model PackageTranslation {
-//   id          String @id @default(uuid())
-//   packageId   String
-//   languageId  String
-
-//   title       String?
-//   overview    String? @db.Text
-//   description String? @db.Text
-//   highlights  String? @db.Text
-//   included    String? @db.Text
-//   excluded    String? @db.Text
-
-//   package  Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
-//   language Language @relation(fields: [languageId], references: [id])
-
-//   @@unique([packageId, languageId])
-// }
-
-// model PackageImage {
-//   id        String @id @default(uuid())
-//   packageId String
-//   url       String
-//   isPrimary Boolean @default(false)
-//   order     Int     @default(0)
-
-//   translations PackageImageTranslation[]
-//   package Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
-
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-// }
-
-// model PackageImageTranslation {
-//   id         String @id @default(uuid())
-//   imageId    String
-//   languageId String
-//   altText    String?
-
-//   image    PackageImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
-//   language Language     @relation(fields: [languageId], references: [id])
-
-//   @@unique([imageId, languageId])
-// }
-
-// model PackageItinerary {
-//   id        String @id @default(uuid())
-//   day       Int
-//   packageId String
-
-//   translations PackageItineraryTranslation[]
-
-//   package Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
-
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-// }
-// model PackageItineraryTranslation {
-//   id           String @id @default(uuid())
-//   itineraryId  String
-//   languageId   String
-
-//   title        String?
-//   content      String? @db.Text
-
-//   itinerary PackageItinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
-//   language   Language         @relation(fields: [languageId], references: [id])
-
-//   @@unique([itineraryId, languageId])
-// }
-
-// model PackageBooking {
-//   id         String @id @default(uuid())
-//   packageId  String
-//   guestId    String
-
-//   bookingRef String @unique
-//   startDate  DateTime
-
-//   adults     Int
-//   children   Int
-
-//   subtotal   Int
-//   tax        Int
-//   serviceFee Int
-
-//   totalPrice Int
-//   currency   String @default("USD")
-
-//   status     BookingStatus @default(PENDING)
-//   createdAt  DateTime @default(now())
-
-//   package Package   @relation(fields: [packageId], references: [id])
-//   guest   GuestInfo @relation(fields: [guestId], references: [id])
-// }
+model Admin {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Will store the HASH, not the real password
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

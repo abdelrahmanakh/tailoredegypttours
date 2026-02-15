@@ -1,20 +1,38 @@
 'use server'
-import { cookies } from 'next/headers'
+import { prisma } from '@/lib/prisma'
+import { createSession } from '@/lib/auth' // Import from your new auth lib
+import bcrypt from 'bcryptjs'
+import { redirect } from 'next/navigation'
 
-export async function setAdminCookie(username, password) {
-  // Check BOTH username and password
-  if (username === process.env.ADMIN_USER && password === process.env.ADMIN_PASS) {
-    
-    // Set a cookie that expires in 1 day
-    const cookieStore = await cookies()
-    
-    // We store the password (or a token) in the cookie to verify identity in middleware
-    cookieStore.set('admin_session', password, { 
-      httpOnly: true, 
-      path: '/',
-      maxAge: 60 * 60 * 24 
-    })
-    return true
+export async function loginAdmin(prevState, formData) {
+  console.log("Prisma Instance:", prisma); // Should NOT be undefined
+  console.log("Available Models:", Object.keys(prisma || {})); // Should include 'admin'
+  const email = formData.get('email')
+  const password = formData.get('password')
+
+  if (!email || !password) {
+    return { message: 'Please enter all fields' }
   }
-  return false
+
+  // 1. Find user in DB
+  const admin = await prisma.admin.findUnique({
+    where: { email },
+  })
+
+  if (!admin) {
+    return { message: 'Invalid credentials' } // Generic message for security
+  }
+
+  // 2. Compare the provided password with the stored hash
+  const passwordsMatch = await bcrypt.compare(password, admin.password)
+
+  if (!passwordsMatch) {
+    return { message: 'Invalid credentials' }
+  }
+
+  // 3. Create secure session
+  await createSession(admin.id)
+
+  // 4. Redirect
+  redirect('/admin')
 }

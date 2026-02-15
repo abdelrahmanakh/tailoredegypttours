@@ -20,11 +20,6 @@ export default function NewDestinationPage() {
           <input name="slug" placeholder="cairo (auto-generated if empty)" className="w-full border border-gray-300 rounded-lg p-3 bg-gray-50 font-mono text-sm" />
         </div>
 
-        <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Image URL</label>
-          <input name="imageUrl" placeholder="https://..." className="w-full border border-gray-300 rounded-lg p-3" />
-        </div>
-
         <button className="w-full bg-primary text-white py-3 rounded-xl font-bold shadow-lg hover:bg-primary-dark transition">
           Create & Translate →
         </button>

@@ -1,23 +1,23 @@
 'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation' // For navigating to search page
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
-export default function Hero() {
+export default function Hero({ categories = [] }) {
   const router = useRouter();
   const [destination, setDestination] = useState('');
-  const [tourType, setTourType] = useState('All Tours');
+  
+  // Default to "All Tours"
+  const [selectedCategory, setSelectedCategory] = useState({ name: 'All Tours', slug: '' });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleSearch = () => {
-    // Redirect to search page with query parameters
-    if (destination.trim()) {
-      router.push(`/tours?location=${encodeURIComponent(destination)}&type=${encodeURIComponent(tourType)}`);
-    } else {
-      alert('Please enter a destination to search.');
-    }
+    // Build query params
+    const params = new URLSearchParams();
+    if (destination.trim()) params.set('location', destination);
+    if (selectedCategory.slug) params.set('category', selectedCategory.slug);
+    
+    router.push(`/tours?${params.toString()}`);
   };
-
-  const tourTypes = ['All Tours', 'Adventure', 'Historical', 'Relaxation', 'Cultural', 'Cruises'];
 
   return (
     <header className="hero-section flex flex-col justify-center items-center relative">
@@ -44,6 +44,7 @@ export default function Hero() {
                             className="text-xs text-gray-500 w-full outline-none placeholder-gray-400 font-medium bg-transparent"
                             value={destination}
                             onChange={(e) => setDestination(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                         />
                     </div>
                 </div>
@@ -57,7 +58,7 @@ export default function Hero() {
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                             className="flex justify-between items-center w-full text-xs text-gray-500 font-medium bg-transparent focus:outline-none"
                         >
-                            <span>{tourType}</span>
+                            <span>{selectedCategory.name}</span>
                             <i className={`fa-solid fa-chevron-down text-[10px] transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`}></i>
                         </button>
 
@@ -65,13 +66,19 @@ export default function Hero() {
                         {isDropdownOpen && (
                             <div className="absolute top-full left-0 mt-4 w-full bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50">
                                 <div className="max-h-60 overflow-y-auto">
-                                    {tourTypes.map((type) => (
+                                    <div 
+                                        onClick={() => { setSelectedCategory({ name: 'All Tours', slug: '' }); setIsDropdownOpen(false); }}
+                                        className="px-4 py-3 hover:bg-emerald-50 hover:text-primary cursor-pointer text-sm text-gray-600 transition flex items-center gap-2 border-b border-gray-50"
+                                    >
+                                        All Tours
+                                    </div>
+                                    {categories.map((cat) => (
                                         <div 
-                                            key={type}
-                                            onClick={() => { setTourType(type); setIsDropdownOpen(false); }}
+                                            key={cat.id}
+                                            onClick={() => { setSelectedCategory(cat); setIsDropdownOpen(false); }}
                                             className="px-4 py-3 hover:bg-emerald-50 hover:text-primary cursor-pointer text-sm text-gray-600 transition flex items-center gap-2 border-b border-gray-50 last:border-0"
                                         >
-                                            {type}
+                                            {cat.name}
                                         </div>
                                     ))}
                                 </div>
@@ -89,11 +96,25 @@ export default function Hero() {
                 </button>
             </div>
         </div>
-
-        {/* Wave Divider */}
+        
+        {/* Wave Divider (SVG remains the same) */}
         <div className="custom-shape-divider-bottom">
-            <svg width="1440" height="107" viewBox="0 0 1440 107" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M-36 68.6241C-36 68.6241 3.11349 52.1348 39.0124 50.9845C75.4465 49.8341 106.524 50.9845 150.995 56.7366C211.54 64.4059 328.346 95.4672 390.499 78.5944C452.652 61.7215 455.331 60.9548 486.944 50.2175C522.306 37.9464 594.104 13.4041 683.047 14.5546C777.884 15.705 949.873 78.211 1020.6 75.1432C1028.1 74.7596 1055.97 72.0755 1076.86 67.4737C1097.22 62.8722 1127.22 52.9019 1167.95 49.4505C1185.09 47.9167 1212.42 45.2323 1244.04 45.9993C1252.07 46.3827 1277.79 47.5331 1308.33 52.1349C1338.87 56.7366 1367.27 64.0226 1392.98 66.3233C1448.17 70.5415 1483 64.4059 1483 64.4059V105.821H-36V68.6241Z" fill="#f0fef8"/>
+           {/* ... existing SVG code ... */}
+           <svg width="1440" height="107" viewBox="0 0 1440 107" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <mask id="mask0_7_672" style={{ maskType: 'luminance' }} maskUnits="userSpaceOnUse" x="-36" y="0" width="1519" height="105">
+                    <path d="M1483 0.339294H-36V104.73H1483V0.339294Z" fill="white"/>
+                </mask>
+                <g mask="url(#mask0_7_672)">
+                    <path d="M-36 68.6241C-36 68.6241 3.11349 52.1348 39.0124 50.9845C75.4465 49.8341 106.524 50.9845 150.995 56.7366C211.54 64.4059 328.346 95.4672 390.499 78.5944C452.652 61.7215 455.331 60.9548 486.944 50.2175C522.306 37.9464 594.104 13.4041 683.047 14.5546C777.884 15.705 949.873 78.211 1020.6 75.1432C1028.1 74.7596 1055.97 72.0755 1076.86 67.4737C1097.22 62.8722 1127.22 52.9019 1167.95 49.4505C1185.09 47.9167 1212.42 45.2323 1244.04 45.9993C1252.07 46.3827 1277.79 47.5331 1308.33 52.1349C1338.87 56.7366 1367.27 64.0226 1392.98 66.3233C1448.17 70.5415 1483 64.4059 1483 64.4059V105.821H-36V68.6241ZM85.6272 62.4885C89.3783 66.3233 96.3429 64.0226 108.667 64.0226C120.99 64.0226 141.351 68.6241 139.743 68.2407C138.136 67.8573 123.133 62.4885 107.595 60.9548C91.5209 59.0374 82.4128 58.6538 85.6272 62.4885ZM184.214 72.8422C184.214 72.8422 197.074 73.6092 214.22 76.2936C231.365 79.3614 269.408 87.0309 295.126 89.7151C339.061 93.9332 379.782 89.7151 376.032 89.3317C371.746 88.9481 324.595 91.6325 281.731 85.1136C264.05 82.4292 231.901 76.677 215.292 74.7596C197.61 72.4589 184.214 72.8422 184.214 72.8422ZM490.694 73.2259C481.585 75.9103 561.955 55.2026 589.817 49.8341C601.069 47.5331 623.037 43.6986 643.397 42.1645C664.294 40.6308 691.084 40.6308 690.548 40.2472C690.548 39.4801 659.472 37.1794 630.538 40.2472C601.605 43.3149 602.676 44.4653 589.817 46.3827C569.456 49.4505 499.803 70.5415 490.694 73.2259ZM416.217 79.3614C415.146 79.3614 420.503 80.8951 441.936 75.1432C463.368 69.3911 477.835 61.7215 478.906 60.9548C479.978 60.5712 460.154 67.8573 443.543 72.4589C427.469 77.0606 416.753 79.3614 416.217 79.3614ZM-33.321 82.8125C-32.7852 82.4292 -23.1408 78.5944 -7.60263 73.2259C7.93572 67.8573 29.3679 62.4885 28.2962 62.8722C27.2247 62.8722 9.54325 65.1729 -11.353 72.4589C-32.2494 79.7448 -33.8568 83.1962 -33.321 82.8125ZM1315.29 61.3382C1314.75 62.1052 1325.47 62.1052 1339.4 65.9399C1353.34 69.7745 1368.34 72.0755 1381.2 73.6092C1402.63 76.677 1443.89 73.2259 1441.74 72.8422C1440.14 72.4589 1397.81 73.9929 1374.77 70.1581C1362.98 68.2407 1361.91 68.2407 1344.23 64.0226C1326.54 59.8044 1315.83 60.1878 1315.29 61.3382ZM1091.87 70.5415C1089.72 70.9251 1073.11 76.677 1046.85 80.5118C1020.6 84.7299 999.173 82.4292 999.173 83.5795C999.173 84.7299 1004.53 87.0309 1032.39 84.7299C1060.25 82.4292 1094.01 70.1581 1091.87 70.5415ZM1099.37 80.1284C1098.3 79.7448 1081.15 85.1136 1068.83 86.6473C1056.5 87.7977 1058.64 88.5647 1058.64 88.9481C1058.64 89.3317 1064.54 89.7151 1073.11 88.1813C1082.22 86.2639 1100.44 80.5118 1099.37 80.1284ZM981.485 88.9481C980.954 88.1813 962.734 85.8803 951.485 82.0458C940.236 78.211 941.839 79.7448 941.308 80.1284C940.768 80.5118 945.586 83.1962 954.16 85.1136C962.734 87.4143 982.025 89.7151 981.485 88.9481ZM1132.58 63.2555C1133.12 62.1052 1130.98 61.3382 1122.41 64.0226C1113.83 66.7067 1108.47 69.0077 1110.62 68.6241C1112.76 68.2407 1115.44 67.0903 1124.01 65.5563C1133.12 64.0226 1132.05 64.4059 1132.58 63.2555ZM1298.15 58.2704C1299.22 58.2704 1286.9 55.2026 1280.47 54.8192C1274.04 54.4356 1269.75 54.4356 1269.75 55.586C1269.75 56.7366 1270.29 57.5034 1278.32 57.12C1286.9 56.7366 1297.07 58.2704 1298.15 58.2704ZM667.509 24.9083C668.045 24.5248 680.368 26.0587 707.694 26.0587C734.484 26.0587 780.563 35.262 799.852 39.4801C819.138 43.6986 746.271 24.5248 711.444 23.7579C676.617 22.9909 666.973 25.2918 667.509 24.9083Z" fill="#f0fef8"/>
+                    <path d="M38.4762 36.796C39.0121 37.1794 63.1232 35.6454 77.0541 36.796C116.168 39.4801 168.141 49.0671 165.997 47.9167C163.854 46.766 92.5926 36.029 74.9115 35.262C48.6564 33.728 37.9404 36.796 38.4762 36.796Z" fill="#f0fef8"/>
+                    <path d="M264.585 68.2407C265.657 68.624 288.696 72.0752 315.486 72.8422C342.277 73.6092 383.533 70.5414 381.39 70.9248C379.782 71.3084 349.778 77.8273 310.129 75.5266C270.479 73.2258 263.514 67.857 264.585 68.2407Z" fill="#f0fef8"/>
+                    <path d="M387.284 54.4356C387.82 54.8192 376.568 58.2704 370.138 58.654C363.709 59.0374 359.422 58.654 359.422 57.5034C359.422 56.353 359.958 55.5862 367.995 55.9696C377.104 56.353 386.748 54.0522 387.284 54.4356Z" fill="#f0fef8"/>
+                    <path d="M406.037 65.1729C406.037 65.5563 429.612 60.5711 439.793 56.7363C449.973 53.2852 473.013 44.8489 472.477 44.8489C471.941 44.4653 449.973 50.9844 438.721 54.8192C427.469 58.6537 406.037 64.7893 406.037 65.1729Z" fill="#f0fef8"/>
+                    <path d="M655.185 3.43385C655.72 3.81733 679.832 2.28345 693.763 3.43385C732.876 6.11817 784.849 15.705 782.706 14.5545C780.563 13.4041 709.302 2.66693 691.62 1.89998C665.365 0.366087 654.65 3.05038 655.185 3.43385Z" fill="#f0fef8"/>
+                    <path d="M1258.5 31.8108C1258.5 31.8108 1252.07 32.9612 1242.96 32.1942C1233.85 31.4272 1211.88 28.7428 1199.02 29.5098C1176.52 31.0438 1159.38 39.8637 1161.52 39.4801C1163.66 39.4801 1184.56 31.0438 1207.6 32.1942C1217.24 32.5775 1234.92 34.1116 1243.5 33.7279C1252.07 33.3446 1258.5 31.8108 1258.5 31.8108Z" fill="#f0fef8"/>
+                    <path d="M1078.47 57.5034C1077.4 57.12 1067.76 60.5711 1055.43 61.7215C1043.11 62.4885 1044.18 62.8719 1044.18 63.6389C1044.18 64.0225 1053.82 65.1729 1062.4 63.6389C1070.97 61.7215 1079.54 57.887 1078.47 57.5034Z" fill="#f0fef8"/>
+                    <path d="M1399.41 55.2026C1399.41 55.586 1376.37 55.2026 1363.51 53.2852C1350.65 51.3678 1336.73 45.9993 1336.73 45.6159C1336.73 45.2323 1351.19 48.6837 1364.05 50.9845C1376.37 53.2852 1398.88 54.8192 1399.41 55.2026Z" fill="#f0fef8"/>
+                </g>
             </svg>
         </div>
     </header>

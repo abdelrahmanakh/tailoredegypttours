@@ -1,22 +1,37 @@
-// UPDATED IMPORTS: Point to the new feature folder
-import { getFeaturedTours } from "@/features/home/actions/getFeaturedData";
+import { 
+  getFeaturedTours, 
+  getTourCategories, 
+  getFeaturedDestinations, 
+  getCustomerReviews 
+} from "@/features/home/actions/getFeaturedData";
+
 import Hero from '@/features/home/components/Hero'
 import TopDeals from '@/features/home/components/TopDeals'
-import WhyChooseUs from '@/features/home/components/WhyChooseUs'
 import PopularTours from '@/features/home/components/PopularTours'
+import CustomerReviews from '@/features/home/components/CustomerReviews'
+
+// These components remain static for now or can be updated later
+import WhyChooseUs from '@/features/home/components/WhyChooseUs'
 import PromoSection from '@/features/home/components/PromoSection'
 import PopularThingsToDo from '@/features/home/components/PopularThingsToDo'
-import CustomerReviews from '@/features/home/components/CustomerReviews'
 import TravelArticles from '@/features/home/components/TravelArticles'
 
 export default async function Home() {
-  const featuredTours = await getFeaturedTours();
+  // Parallel data fetching for performance
+  const [featuredTours, categories, destinations, reviews] = await Promise.all([
+    getFeaturedTours(),
+    getTourCategories(),
+    getFeaturedDestinations(),
+    getCustomerReviews()
+  ]);
+
   return (
     <main className="font-sans text-gray-800">
+      {/* Pass categories to Hero for the dropdown */}
+      <Hero categories={categories} />
       
-      <Hero />
-      
-      <TopDeals />
+      {/* Pass destinations to TopDeals */}
+      <TopDeals destinations={destinations} />
       
       <WhyChooseUs />
       
@@ -26,10 +41,10 @@ export default async function Home() {
       
       <PopularThingsToDo />
       
-      <CustomerReviews />
+      {/* Pass reviews to CustomerReviews */}
+      <CustomerReviews reviews={reviews} />
       
-      <TravelArticles />
-      
+      {/* <TravelArticles /> */}
     </main>
   )
 }

@@ -32,6 +32,7 @@ export default async function CategoriesList() {
         <table className="w-full text-left">
           <thead className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase">
             <tr>
+              <th className="p-4">Image</th>
               <th className="p-4">Name</th>
               <th className="p-4">Slug</th>
               <th className="p-4">Status</th>
@@ -43,6 +44,15 @@ export default async function CategoriesList() {
           <tbody className="divide-y divide-gray-100">
             {categories.map(cat => (
               <tr key={cat.id} className="hover:bg-gray-50">
+                <td className="p-4">
+                  <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                    {cat.imageUrl ? (
+                      <img src={cat.imageUrl} alt={cat.slug} className="w-full h-full object-cover"/>
+                    ) : (
+                      <i className="fa-regular fa-image text-gray-300"></i>
+                    )}
+                  </div>
+                </td>
                 <td className="p-4 font-bold text-gray-800">
                   {/* Now uses the default language fetched above */}
                   {cat.translations[0]?.name || <span className="text-red-400 italic">No Name</span>}
