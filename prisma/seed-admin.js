@@ -3,13 +3,13 @@ const { prisma } = require('../src/lib/prisma')
 const bcrypt = require('bcryptjs')
 
 async function main() {
-  const email = process.env.ADMIN_EMAIL || 'admin@tailoredegypt.com'
+  const email = process.env.ADMIN_USER || 'admin@tailoredegypt.com'
   
-  if (!process.env.ADMIN_INIT_PASSWORD) {
-    throw new Error('Please set ADMIN_INIT_PASSWORD in your .env file.')
+  if (!process.env.ADMIN_PASS) {
+    throw new Error('Please set ADMIN_PASS in your .env file.')
   }
 
-  const hashedPassword = await bcrypt.hash(process.env.ADMIN_INIT_PASSWORD, 12)
+  const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASS, 12)
 
   // Use the imported prisma instance
   const admin = await prisma.admin.upsert({
